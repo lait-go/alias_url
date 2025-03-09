@@ -10,36 +10,49 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func StorageWork(url, alias string) error{
-	db, err := sql.Open("sqlite3", "./storage/storage.db")
+type Db struct {
+	db *sql.DB
+}
+
+func StorageCheck(storagePath string) error{
+	d := Db{}
+	var err error
+
+	d.db, err = sql.Open("sqlite3", storagePath)
 	if err != nil {
 		erration.LogError(err, "ERROR_STORAGE_FILE_OPEN")
 		return err
 	}
 
-	tableExists(db)
-
-
+	d.tableExists()
+	
 	return nil
 }
 
-func tableExists(db *sql.DB){
-	stmt, _:= db.Prepare(`SELECT * FROM url`)
+func (d *Db)tableExists(){
+	var exists bool
 
-	file , _ := stmt.Exec()
-	if file == nil{
-		createTables(db)
+	query := `
+	SELECT COUNT(*) > 0 
+	FROM sqlite_master 
+	WHERE type='table' AND name=?;
+	`
+
+	d.db.QueryRow(query, "url").Scan(&exists)
+	if !exists {
+		d.createTables()
 	}
 }
 
-func createTables(db *sql.DB){
-	stmt, err := db.Prepare(`
+func (d *Db)createTables(){
+	stmt, err := d.db.Prepare(`
 	CREATE TABLE IF NOT EXISTS url(
 		id INTEGER PRIMARY KEY,
 		alias TEXT NOT NULL UNIQUE,
 		url TEXT NOT NULL);
 	CREATE INDEX IF NOT EXISTS idx_alias ON url(alias);
 	`)
+
 	if err != nil {
 		erration.LogError(err, "ERROR_STORAGE_PREPARE")
 	}

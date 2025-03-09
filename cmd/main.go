@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "encoding/json"
 	"fmt"
 	"net/http"
 	"retsAPI/serv/config"
@@ -14,6 +13,12 @@ import (
 )
 
 func main() {
+	// add slogpretty
+	// transfer db to postgresSQL
+	// add delete and update url in storage
+	// write tests
+	// write README.md
+
 	cfg := config.NewConfig()
 	log := logger.NewLogger(cfg.Env)
 
@@ -25,7 +30,7 @@ func main() {
 	}
 	log.Debug("STORAGE_EXIST")
 	fmt.Println(cfg)
-	storage.StorageWork("asf", "assss")
+	storage.StorageCheck(cfg.StoragePath)
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -35,9 +40,6 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/", reading.ReadRequest())
-	
-	
 
 	http.ListenAndServe(cfg.HTTPServer.Address, router)
-	//run server
 }
